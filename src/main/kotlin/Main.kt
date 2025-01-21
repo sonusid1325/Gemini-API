@@ -1,16 +1,59 @@
-package com.icebear
+import okhttp3.*
+import io.github.cdimascio.dotenv.dotenv
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONObject
+import java.io.IOException
 
-//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
-// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
 fun main() {
-    val name = "Kotlin"
-    //TIP Press <shortcut actionId="ShowIntentionActions"/> with your caret at the highlighted text
-    // to see how IntelliJ IDEA suggests fixing it.
-    println("Hello, " + name + "!")
-
-    for (i in 1..5) {
-        //TIP Press <shortcut actionId="Debug"/> to start debugging your code. We have set one <icon src="AllIcons.Debugger.Db_set_breakpoint"/> breakpoint
-        // for you, but you can always add more by pressing <shortcut actionId="ToggleLineBreakpoint"/>.
-        println("i = $i")
+    val dotenv = dotenv {
+        directory = "."
+        filename = ".env"
     }
+    val apiKey = dotenv["GEMINI_API_KEY"]
+
+    if (apiKey.isNullOrEmpty()) {
+        println("Error: GEMINI_API_KEY is missing in .env file.")
+        return
+    }
+
+    // API URL
+    val url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$apiKey"
+
+    // JSON body
+    val jsonBody = JSONObject()
+        .put("contents", listOf(
+            JSONObject()
+                .put("parts", listOf(
+                    JSONObject().put("text", "Explain how AI works")
+                ))
+        ))
+
+    // Create OkHttp client
+    val client = OkHttpClient()
+
+    // Build request
+    val requestBody = jsonBody.toString().toRequestBody("application/json".toMediaType())
+    val request = Request.Builder()
+        .url(url)
+        .post(requestBody)
+        .addHeader("Content-Type", "application/json")
+        .build()
+
+    // Make the request
+    client.newCall(request).enqueue(object : Callback {
+        override fun onFailure(call: Call, e: IOException) {
+            println("Error: ${e.message}")
+        }
+
+        override fun onResponse(call: Call, response: Response) {
+            if (response.isSuccessful) {
+                response.body?.string()?.let {
+                    println("Response: $it")
+                }
+            } else {
+                println("Error: ${response.code} ${response.message}")
+            }
+        }
+    })
 }
