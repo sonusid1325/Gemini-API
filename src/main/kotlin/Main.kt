@@ -5,7 +5,13 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.io.IOException
 
-fun main() {
+
+fun gemini(query: String){
+    val env = dotenv({
+        directory = "."
+        filename = ".env"
+    })
+
     val dotenv = dotenv {
         directory = "."
         filename = ".env"
@@ -40,20 +46,8 @@ fun main() {
         .addHeader("Content-Type", "application/json")
         .build()
 
-    // Make the request
-    client.newCall(request).enqueue(object : Callback {
-        override fun onFailure(call: Call, e: IOException) {
-            println("Error: ${e.message}")
-        }
+}
 
-        override fun onResponse(call: Call, response: Response) {
-            if (response.isSuccessful) {
-                response.body?.string()?.let {
-                    println("Response: $it")
-                }
-            } else {
-                println("Error: ${response.code} ${response.message}")
-            }
-        }
-    })
+fun main() {
+
 }
